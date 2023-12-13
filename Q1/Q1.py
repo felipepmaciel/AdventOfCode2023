@@ -63,26 +63,23 @@ def get_line_first_numeric_value_index(line):
     return -1
 
 
-def get_line_first_or_last_string_value_index(line: str, first_or_last: str):
-    string_numbers = {}
-    for number in named_numbers_list:
-        if first_or_last == "first":
-            index = line.find(number)
-        else:
-            index = line.rfind(number)
-        if index != -1:
-            string_numbers[number] = index
-            continue
+def get_line_first_or_last_string_value_index(
+    line: str, first_or_last: str, named_numbers_list: list
+):
+    string_numbers = {
+        number: line.find(number) if first_or_last == "first" else line.rfind(number)
+        for number in named_numbers_list
+    }
+    string_numbers = {k: v for k, v in string_numbers.items() if v != -1}
+
     if string_numbers:
-        if first_or_last == "first":
-            first_occurrence_key = min(string_numbers, key=string_numbers.get)
-            first_occurrence_index = string_numbers[first_occurrence_key]
-            return first_occurrence_index, first_occurrence_key
-        last_occurrence_key = max(string_numbers, key=string_numbers.get)
-        last_occurrence_index = string_numbers[last_occurrence_key]
-        return last_occurrence_index, last_occurrence_key
+        occurrence_key = min if first_or_last == "first" else max
+        occurrence_index = string_numbers[
+            occurrence_key(string_numbers, key=string_numbers.get)
+        ]
+        return occurrence_index, occurrence_key(string_numbers, key=string_numbers.get)
     else:
-        return -1, number
+        return -1, named_numbers_list[-1] if named_numbers_list else None
 
 
 def calculate_file_calibration_value(file):
@@ -92,7 +89,7 @@ def calculate_file_calibration_value(file):
         (
             index_of_first_digit_string,
             string_first_digit,
-        ) = get_line_first_or_last_string_value_index(line, "first")
+        ) = get_line_first_or_last_string_value_index(line, "first", named_numbers_list)
         index_of_last_digit_numeric = (
             (len(line) - get_line_first_numeric_value_index(line[::-1]) - 1)
             if get_line_first_numeric_value_index(line[::-1]) != -1
@@ -101,7 +98,7 @@ def calculate_file_calibration_value(file):
         (
             index_of_last_digit_string,
             string_last_digit,
-        ) = get_line_first_or_last_string_value_index(line, "last")
+        ) = get_line_first_or_last_string_value_index(line, "last", named_numbers_list)
         # so tem numerico
         if index_of_first_digit_numeric != -1 and index_of_first_digit_string == -1:
             first_digit = line[index_of_first_digit_numeric]
